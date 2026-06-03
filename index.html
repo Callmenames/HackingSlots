@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>NEURAL BREACH</title>
+
+<style>
+body{
+    background:#050505;
+    color:#00ff88;
+    font-family:Consolas,monospace;
+    text-align:center;
+}
+
+h1{
+    text-shadow:0 0 20px #00ff88;
+}
+
+#slot{
+    font-size:40px;
+    margin:20px;
+}
+
+.reel{
+    display:inline-block;
+    width:80px;
+}
+
+button{
+    background:black;
+    color:#00ff88;
+    border:1px solid #00ff88;
+    padding:10px 20px;
+    cursor:pointer;
+}
+
+#imageContainer{
+    margin-top:20px;
+}
+
+#hiddenImage{
+    width:500px;
+    image-rendering:pixelated;
+}
+
+.light{
+    display:inline-block;
+    width:25px;
+    height:25px;
+    border-radius:50%;
+    margin:5px;
+    background:#222;
+}
+
+.active{
+    box-shadow:0 0 20px currentColor;
+}
+</style>
+</head>
+<body>
+
+<h1>NEURAL BREACH</h1>
+
+<h2>Stage <span id="stage">1</span>/5</h2>
+
+<div id="slot">
+<span class="reel">?</span>
+<span class="reel">?</span>
+<span class="reel">?</span>
+<span class="reel">?</span>
+<span class="reel">?</span>
+</div>
+
+<button onclick="spin()">EXECUTE HACK</button>
+
+<h3>Decryption Points: <span id="dp">0</span></h3>
+
+<div>
+<div id="red" class="light"></div>
+<div id="blue" class="light"></div>
+<div id="green" class="light"></div>
+<div id="yellow" class="light"></div>
+<div id="purple" class="light"></div>
+</div>
+
+<h3>Encryption Level:
+<span id="enc">10</span>
+</h3>
+
+<div id="imageContainer">
+<img id="hiddenImage"
+src="https://picsum.photos/600/400"
+style="filter:blur(20px)">
+</div>
+
+<script>
+
+const colors = [
+"RED",
+"BLUE",
+"GREEN",
+"YELLOW",
+"PURPLE"
+];
+
+let dp = 0;
+let encryption = 10;
+let stage = 1;
+
+let energy = {
+RED:0,
+BLUE:0,
+GREEN:0,
+YELLOW:0,
+PURPLE:0
+};
+
+function spin(){
+
+    const reels =
+        document.querySelectorAll(".reel");
+
+    let result = [];
+
+    for(let i=0;i<5;i++){
+
+        let color =
+            colors[Math.floor(
+                Math.random()*5
+            )];
+
+        result.push(color);
+
+        reels[i].innerText =
+            color.substring(0,3);
+    }
+
+    score(result);
+
+}
+
+function score(result){
+
+    let count = {};
+
+    result.forEach(c=>{
+        count[c]=(count[c]||0)+1;
+        energy[c]++;
+    });
+
+    let values =
+        Object.values(count);
+
+    let gained = 0;
+
+    if(values.includes(5))
+        gained += 100;
+
+    else if(values.includes(4))
+        gained += 40;
+
+    else if(
+        values.includes(3)
+        &&
+        values.includes(2)
+    )
+        gained += 60;
+
+    else if(values.includes(3))
+        gained += 15;
+
+    else if(values.includes(2))
+        gained += 5;
+
+    if(values.length===5)
+        gained += 75;
+
+    dp += gained;
+
+    for(let color in energy){
+
+        if(energy[color] >= 10){
+
+            document
+            .getElementById(
+                color.toLowerCase()
+            )
+            .classList.add("active");
+
+        }
+    }
+
+    checkBonus();
+
+    if(dp >= 100){
+
+        dp -= 100;
+        encryption--;
+
+        updateImage();
+    }
+
+    document.getElementById("dp")
+        .innerText = dp;
+}
+
+function checkBonus(){
+
+    let ready = true;
+
+    for(let c in energy){
+
+        if(energy[c] < 10)
+            ready = false;
+    }
+
+    if(ready){
+
+        dp += 150;
+
+        encryption =
+            Math.max(
+                0,
+                encryption-1
+            );
+
+        for(let c in energy){
+
+            energy[c]=0;
+
+            document
+            .getElementById(
+                c.toLowerCase()
+            )
+            .classList.remove(
+                "active"
+            );
+        }
+
+        alert(
+          "NETWORK BREACH!\n+150 DP"
+        );
+
+        updateImage();
+    }
+}
+
+function updateImage(){
+
+    document
+      .getElementById("enc")
+      .innerText =
+      encryption;
+
+    const blur =
+      encryption * 2;
+
+    document
+      .getElementById(
+        "hiddenImage"
+      )
+      .style.filter =
+      `blur(${blur}px)`;
+
+    if(encryption <= 0){
+
+        alert(
+          "IMAGE RECOVERED!"
+        );
+
+        stage++;
+
+        if(stage > 5){
+
+            alert(
+              "SYSTEM FULLY BREACHED"
+            );
+
+            return;
+        }
+
+        document
+          .getElementById(
+            "stage"
+          )
+          .innerText =
+          stage;
+
+        encryption = 10;
+
+        updateImage();
+    }
+}
+
+</script>
+
+</body>
+</html>
