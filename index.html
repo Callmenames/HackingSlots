@@ -177,7 +177,7 @@ const password = "PASSWORD";
 
 let revealed = Array(password.length).fill(false);
 
-let reelsToUse = 3;
+let activeReels = 3;
 
 let spinning = false;
 
@@ -410,7 +410,7 @@ document.getElementById("buy4").onclick = ()=>{
 
     if(spinning) return;
 
-    if(reelsToUse >= 4) return;
+    if(activeReels >= 4) return;
 
     if(tokens < 10) return;
 
@@ -424,7 +424,7 @@ document.getElementById("buy4").onclick = ()=>{
 
 }
 
-    reelsToUse = 4;
+    activeReels = 4;
 
     document.getElementById("reel3")
         .classList.remove("disabled");
@@ -439,13 +439,13 @@ document.getElementById("buy5").onclick = ()=>{
 
     if(spinning) return;
 
-    if(reelsToUse >= 5) return;
+    if(activeReels >= 5) return;
 
     if(tokens < 20) return;
 
     tokens -= 20;
 
-    reelsToUse = 5;
+    activeReels = 5;
 
     document.getElementById("reel4")
         .classList.remove("disabled");
@@ -458,7 +458,7 @@ document.getElementById("spinBtn").onclick = spin;
 
 async function spin(){
 
-    let reelsToUse = reelsToUse;
+    let reelsToUse = activeReels;
 
     if(
         bonuses.bonusReel > 0 &&
@@ -520,7 +520,7 @@ async function spin(){
 
     evaluate(finalResults);
 
-    reelsToUse = 3;
+    activeReels = 3;
 
     document.getElementById("reel3")
         .classList.add("disabled");
