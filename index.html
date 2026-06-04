@@ -120,14 +120,14 @@ h1{
     <div id="reel3" class="reel disabled">⬛</div>
     <div id="reel4" class="reel disabled">⬛</div>
 
-    <button id="spinBtn">SPIN</button>
+    <button id="spinBtn">SPIN -10</button>
 
 </div>
 
 <div class="upgrades">
 
-    <button id="buy4" class="upgradeBtn">+10</button>
-    <button id="buy5" class="upgradeBtn" disabled>+20</button>
+    <button id="buy4" class="upgradeBtn">-10</button>
+    <button id="buy5" class="upgradeBtn" disabled>-20</button>
 
 </div>
 
@@ -360,32 +360,32 @@ function evaluate(results){
 
     if(values[0] === 5){
 
-        reward = 150;
+        reward = 500;
         handName = "Five of a Kind";
 
     }else if(values[0] === 4){
 
-        reward = 75;
+        reward = 150;
         handName = "Four of a Kind";
 
     }else if(values[0] === 3 && values[1] === 2){
 
-        reward = 50;
+        reward = 100;
         handName = "Full House";
 
     }else if(values[0] === 3){
 
-        reward = 25;
+        reward = 50;
         handName = "Three of a Kind";
 
     }else if(values.filter(v => v === 2).length >= 2){
 
-        reward = 15;
+        reward = 30;
         handName = "Two Pair";
 
     }else if(values[0] === 2){
 
-        reward = 5;
+        reward = 15;
         handName = "Pair";
 
     }
