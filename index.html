@@ -215,11 +215,11 @@ function updateBonusMeter(){
 
     document.getElementById("bonusText")
         .textContent =
-        bonusProgress + " / 10";
+        bonusProgress + " / 5";
 
     document.getElementById("bonusBar")
         .style.width =
-        (bonusProgress * 10) + "%";
+        (bonusProgress * 5) + "%";
 
 }
 
@@ -681,7 +681,7 @@ function evaluate(results){
 
     //bonusProgress++;
 
-    if(bonusProgress >= 10){
+    if(bonusProgress >= 5){
     
         bonusProgress = 0;
     
