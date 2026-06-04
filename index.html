@@ -344,65 +344,111 @@ function evaluate(results){
 
     const counts = {};
 
-    results.forEach(symbol=>{
+    results.forEach(symbol => {
 
         counts[symbol] =
             (counts[symbol] || 0) + 1;
 
     });
 
-    let message = "No Match";
+    const values = Object.values(counts);
 
-    Object.keys(counts).forEach(symbol=>{
+    let reward = 0;
+    let handName = "No Win";
 
-        const count = counts[symbol];
+    values.sort((a,b)=>b-a);
 
-        if(count >= 3){
+    if(values[0] === 5){
 
-            let reward = 0;
+        reward = 150;
+        handName = "Five of a Kind";
 
-            if(count === 3) reward = 20;
-            if(count === 4) reward = 50;
-            if(count === 5) reward = 120;
+    }else if(values[0] === 4){
 
-            tokens += reward;
+        reward = 75;
+        handName = "Four of a Kind";
 
-            message =
-                `${count}x ${symbol} → +${reward} Tokens`;
+    }else if(values[0] === 3 && values[1] === 2){
 
-            if(symbol === "🔑"){
+        reward = 50;
+        handName = "Full House";
 
-                let gain = 0;
+    }else if(values[0] === 3){
 
-                if(count === 3) gain = 25;
-                if(count === 4) gain = 50;
-                if(count === 5) gain = 100;
+        reward = 25;
+        handName = "Three of a Kind";
 
-                encryption += gain;
+    }else if(values.filter(v => v === 2).length >= 2){
 
-                if(encryption >= 100){
+        reward = 15;
+        handName = "Two Pair";
 
-                    encryption -= 100;
+    }else if(values[0] === 2){
 
-                    revealLetter();
+        reward = 5;
+        handName = "Pair";
 
-                    message +=
-                    ` | Letter Decrypted`;
+    }
 
-                }
+    tokens += reward;
 
-                updateEncryption();
+    let encryptionGain = 0;
 
-            }
+    const keyCount = counts["🔑"] || 0;
 
-        }
+    if(keyCount === 2) encryptionGain = 5;
+    if(keyCount === 3) encryptionGain = 15;
+    if(keyCount === 4) encryptionGain = 35;
+    if(keyCount === 5) encryptionGain = 100;
 
-    });
+    encryption += encryptionGain;
 
+    let decrypted = false;
+
+    while(encryption >= 100){
+
+        encryption -= 100;
+
+        revealLetter();
+
+        decrypted = true;
+
+    }
+
+    updateEncryption();
     updateTokens();
 
-    document.getElementById("message")
-        .textContent = message;
+    let message = "";
+
+    if(reward > 0){
+
+        message +=
+        `${handName} (+${reward} Tokens)`;
+
+    }
+
+    if(encryptionGain > 0){
+
+        message +=
+        ` | 🔑 +${encryptionGain} Encryption`;
+
+    }
+
+    if(decrypted){
+
+        message +=
+        ` | Password Letter Revealed`;
+
+    }
+
+    if(message === ""){
+
+        message = "No Win";
+
+    }
+
+    document.getElementById("message").textContent =
+        message;
 
 }
 
