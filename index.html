@@ -594,7 +594,7 @@ function evaluate(results){
 
     }else if(values[0] === 2){
 
-        reward = 20;
+        bonusProgress++;
         handName = "Pair";
 
     }
@@ -679,7 +679,7 @@ function evaluate(results){
     document.getElementById("message").textContent =
         message;
 
-    bonusProgress++;
+    //bonusProgress++;
 
     if(bonusProgress >= 10){
     
