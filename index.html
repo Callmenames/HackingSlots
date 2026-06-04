@@ -85,6 +85,20 @@ h1{
     transition:0.3s;
 }
 
+#activeBonuses{
+    margin-top:15px;
+    color:gold;
+}
+
+#bonusChoices{
+    margin-top:20px;
+}
+
+#bonusChoices button{
+    margin:5px;
+    padding:10px;
+}
+    
 #message{
     margin-top:20px;
     min-height:30px;
@@ -101,6 +115,18 @@ h1{
 <div id="password"></div>
 
 <div>Encryption Key</div>
+
+<div style="margin-top:20px;">
+    Bonus Access
+    <div class="barOuter">
+        <div id="bonusBar" class="barInner"></div>
+    </div>
+    <div id="bonusText">0 / 10</div>
+</div>
+
+<div id="activeBonuses"></div>
+
+<div id="bonusChoices"></div>
 
 <div class="barOuter">
     <div id="barInner" class="barInner"></div>
@@ -151,9 +177,154 @@ const password = "PASSWORD";
 
 let revealed = Array(password.length).fill(false);
 
-let activeReels = 3;
+let reelsToUse = 3;
 
 let spinning = false;
+
+let bonusProgress = 0;
+
+let bonuses = {
+    doubleTokens:0,
+    freeSpins:0,
+    goldSymbols:0,
+    bonusReel:0
+};
+
+function updateBonuses(){
+
+    let html = "<b>ACTIVE HACKS</b><br>";
+
+    for(let key in bonuses){
+
+        if(bonuses[key] > 0){
+
+            html += key +
+            " (" + bonuses[key] + ")<br>";
+
+        }
+
+    }
+
+    document.getElementById(
+        "activeBonuses"
+    ).innerHTML = html;
+
+}
+
+function updateBonusMeter(){
+
+    document.getElementById("bonusText")
+        .textContent =
+        bonusProgress + " / 10";
+
+    document.getElementById("bonusBar")
+        .style.width =
+        (bonusProgress * 10) + "%";
+
+}
+
+function showBonusChoice(){
+
+    const choices = [
+
+        {
+            name:"Double Tokens (10 spins)",
+            action:()=>{
+                bonuses.doubleTokens = 10;
+            }
+        },
+
+        {
+            name:"5 Free Spins",
+            action:()=>{
+                bonuses.freeSpins += 5;
+            }
+        },
+
+        {
+            name:"Decrypt Code",
+            action:()=>{
+                revealLetter();
+            }
+        },
+
+        {
+            name:"+50 Encryption",
+            action:()=>{
+                encryption += 50;
+                updateEncryption();
+            }
+        },
+
+        {
+            name:"Gold Symbol (10 spins)",
+            action:()=>{
+                bonuses.goldSymbols = 10;
+            }
+        },
+
+        {
+            name:"Free Reel 4 (10 spins)",
+            action:()=>{
+                bonuses.bonusReel = 10;
+            }
+        }
+
+    ];
+
+    let a =
+        choices[Math.floor(Math.random()*choices.length)];
+
+    let b =
+        choices[Math.floor(Math.random()*choices.length)];
+
+    while(a === b){
+
+        b =
+        choices[Math.floor(Math.random()*choices.length)];
+
+    }
+
+    const div =
+        document.getElementById("bonusChoices");
+
+    div.innerHTML =
+        "<h3>ACCESS NODE FOUND</h3>";
+
+    const btn1 =
+        document.createElement("button");
+
+    btn1.textContent = a.name;
+
+    btn1.onclick = ()=>{
+
+        a.action();
+
+        div.innerHTML="";
+
+        updateBonuses();
+
+    };
+
+    const btn2 =
+        document.createElement("button");
+
+    btn2.textContent = b.name;
+
+    btn2.onclick = ()=>{
+
+        b.action();
+
+        div.innerHTML="";
+
+        updateBonuses();
+
+    };
+
+    div.appendChild(btn1);
+    div.appendChild(btn2);
+
+}
 
 function updatePassword(){
 
@@ -221,8 +392,16 @@ function updateTokens(){
 
 function randomSymbol(){
 
-    return symbols[
-        Math.floor(Math.random()*symbols.length)
+    let pool = [...symbols];
+
+    if(bonuses.goldSymbols > 0){
+
+        pool.push("⭐");
+
+    }
+
+    return pool[
+        Math.floor(Math.random()*pool.length)
     ];
 
 }
@@ -231,13 +410,21 @@ document.getElementById("buy4").onclick = ()=>{
 
     if(spinning) return;
 
-    if(activeReels >= 4) return;
+    if(reelsToUse >= 4) return;
 
     if(tokens < 10) return;
 
+    if(bonuses.freeSpins > 0){
+
+    bonuses.freeSpins--;
+
+}else{
+
     tokens -= 10;
 
-    activeReels = 4;
+}
+
+    reelsToUse = 4;
 
     document.getElementById("reel3")
         .classList.remove("disabled");
@@ -252,13 +439,13 @@ document.getElementById("buy5").onclick = ()=>{
 
     if(spinning) return;
 
-    if(activeReels >= 5) return;
+    if(reelsToUse >= 5) return;
 
     if(tokens < 20) return;
 
     tokens -= 20;
 
-    activeReels = 5;
+    reelsToUse = 5;
 
     document.getElementById("reel4")
         .classList.remove("disabled");
@@ -270,6 +457,17 @@ document.getElementById("buy5").onclick = ()=>{
 document.getElementById("spinBtn").onclick = spin;
 
 async function spin(){
+
+    let reelsToUse = reelsToUse;
+
+    if(
+        bonuses.bonusReel > 0 &&
+        reelsToUse < 5
+    ){
+    
+        reelsToUse++;
+    
+    }
 
     if(spinning) return;
 
@@ -293,7 +491,7 @@ async function spin(){
 
     const intervals = [];
 
-    for(let i=0;i<activeReels;i++){
+    for(let i=0;i<reelsToUse;i++){
 
         intervals[i] = setInterval(()=>{
 
@@ -304,7 +502,7 @@ async function spin(){
 
     }
 
-    for(let i=0;i<activeReels;i++){
+    for(let i=0;i<reelsToUse;i++){
 
         await new Promise(resolve =>
             setTimeout(resolve,300));
@@ -322,7 +520,7 @@ async function spin(){
 
     evaluate(finalResults);
 
-    activeReels = 3;
+    reelsToUse = 3;
 
     document.getElementById("reel3")
         .classList.add("disabled");
@@ -334,6 +532,18 @@ async function spin(){
     document.getElementById("reel4").textContent = "⬛";
 
     document.getElementById("buy5").disabled = true;
+
+    for(let key in bonuses){
+
+    if(bonuses[key] > 0){
+    
+            bonuses[key]--;
+    
+        }
+    
+    }
+    
+    updateBonuses();
 
     spinning = false;
 
@@ -389,6 +599,15 @@ function evaluate(results){
 
     }
 
+    if(
+    reward > 0 &&
+    bonuses.doubleTokens > 0
+    ){
+    
+        reward *= 2;
+    
+    }
+
     tokens += reward;
 
     let encryptionGain = 0;
@@ -399,6 +618,17 @@ function evaluate(results){
     if(keyCount === 3) encryptionGain = 15;
     if(keyCount === 4) encryptionGain = 35;
     if(keyCount === 5) encryptionGain = 100;
+
+    const goldCount =
+    counts["⭐"] || 0;
+
+    if(goldCount >= 2){
+    
+        tokens += goldCount * 25;
+    
+        encryption += goldCount * 5;
+    
+    }
 
     encryption += encryptionGain;
 
@@ -449,8 +679,22 @@ function evaluate(results){
     document.getElementById("message").textContent =
         message;
 
+    bonusProgress++;
+
+    if(bonusProgress >= 10){
+    
+        bonusProgress = 0;
+    
+        showBonusChoice();
+    
+    }
+    
+    updateBonusMeter();
+    
 }
 
+updateBonusMeter();
+updateBonuses();
 updatePassword();
 updateEncryption();
 updateTokens();
