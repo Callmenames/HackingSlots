@@ -2,295 +2,445 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>NEURAL BREACH</title>
+<title>Vault Hacker</title>
 
 <style>
 body{
-    background:#050505;
-    color:#00ff88;
-    font-family:Consolas,monospace;
+    background:#111;
+    color:#0f0;
+    font-family:monospace;
     text-align:center;
 }
 
 h1{
-    text-shadow:0 0 20px #00ff88;
+    color:#00ff88;
 }
 
-#slot{
-    font-size:40px;
+#reels{
+    display:flex;
+    justify-content:center;
+    gap:10px;
     margin:20px;
 }
 
 .reel{
-    display:inline-block;
-    width:80px;
+    width:100px;
+    height:100px;
+    border:2px solid #0f0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    background:#000;
 }
 
 button{
-    background:black;
-    color:#00ff88;
-    border:1px solid #00ff88;
-    padding:10px 20px;
-    cursor:pointer;
-}
-
-#imageContainer{
-    margin-top:20px;
-}
-
-#hiddenImage{
-    width:500px;
-    image-rendering:pixelated;
-}
-
-.light{
-    display:inline-block;
-    width:25px;
-    height:25px;
-    border-radius:50%;
     margin:5px;
-    background:#222;
+    padding:10px;
+    font-size:16px;
 }
 
-.active{
-    box-shadow:0 0 20px currentColor;
+.panel{
+    margin:15px;
+}
+
+#bonusChoices button{
+    display:block;
+    margin:10px auto;
 }
 </style>
 </head>
 <body>
 
-<h1>NEURAL BREACH</h1>
+<h1>VAULT HACKER</h1>
 
-<h2>Stage <span id="stage">1</span>/5</h2>
-
-<div id="slot">
-<span class="reel">?</span>
-<span class="reel">?</span>
-<span class="reel">?</span>
-<span class="reel">?</span>
-<span class="reel">?</span>
+<div class="panel">
+    Tokens: <span id="tokens">100</span>
 </div>
 
-<button onclick="spin()">EXECUTE HACK</button>
+<div class="panel">
+    Password:
+    <div id="password"></div>
+</div>
 
-<h3>Decryption Points: <span id="dp">0</span></h3>
+<div class="panel">
+    Encryption Key:
+    <span id="keyProgress">0</span>/100
+</div>
+
+<div id="reels"></div>
 
 <div>
-<div id="red" class="light"></div>
-<div id="blue" class="light"></div>
-<div id="green" class="light"></div>
-<div id="yellow" class="light"></div>
-<div id="purple" class="light"></div>
+    <button onclick="spin(3)">Spin 3 Reels (10)</button>
+    <button onclick="spin(4)">Spin 4 Reels (20)</button>
+    <button onclick="spin(5)">Spin 5 Reels (40)</button>
 </div>
 
-<h3>Encryption Level:
-<span id="enc">10</span>
-</h3>
-
-<div id="imageContainer">
-<img id="hiddenImage"
-src="https://picsum.photos/600/400"
-style="filter:blur(20px)">
+<div class="panel">
+    <h3>Result</h3>
+    <div id="result"></div>
 </div>
+
+<div class="panel">
+    <h3>Collection</h3>
+    <div id="collection"></div>
+</div>
+
+<div id="bonusChoices"></div>
 
 <script>
 
-const colors = [
-"RED",
-"BLUE",
-"GREEN",
-"YELLOW",
-"PURPLE"
-];
+let tokens = 100;
 
-let dp = 0;
-let encryption = 10;
-let stage = 1;
+let spins = 0;
 
-let energy = {
-RED:0,
-BLUE:0,
-GREEN:0,
-YELLOW:0,
-PURPLE:0
+let keyPoints = 0;
+
+let collection = [];
+
+let bonusState = {
+    doubleTokens:0,
+    wilds:0,
+    gold:0,
+    freeSpins:0
 };
 
-function spin(){
+const baseSymbols = [
+    "KEY",
+    "TOKEN",
+    "DECRYPT",
+    "FIREWALL",
+    "EXPLOIT",
+    "DATA"
+];
 
-    const reels =
-        document.querySelectorAll(".reel");
+let password = generatePassword();
+let revealed = [];
 
-    let result = [];
+function generatePassword(){
+    const words = [
+        "ACCESS",
+        "OVERRIDE",
+        "BREACH",
+        "PROTOCOL",
+        "MAINFRAME",
+        "DATABASE"
+    ];
 
-    for(let i=0;i<5;i++){
+    let word = words[Math.floor(Math.random()*words.length)];
 
-        let color =
-            colors[Math.floor(
-                Math.random()*5
-            )];
+    revealed = Array(word.length).fill(false);
 
-        result.push(color);
-
-        reels[i].innerText =
-            color.substring(0,3);
-    }
-
-    score(result);
-
+    return word;
 }
 
-function score(result){
+function updateUI(){
 
-    let count = {};
+    document.getElementById("tokens").textContent = tokens;
 
-    result.forEach(c=>{
-        count[c]=(count[c]||0)+1;
-        energy[c]++;
-    });
+    document.getElementById("keyProgress").textContent = keyPoints;
 
-    let values =
-        Object.values(count);
+    let display = "";
 
-    let gained = 0;
-
-    if(values.includes(5))
-        gained += 100;
-
-    else if(values.includes(4))
-        gained += 40;
-
-    else if(
-        values.includes(3)
-        &&
-        values.includes(2)
-    )
-        gained += 60;
-
-    else if(values.includes(3))
-        gained += 15;
-
-    else if(values.includes(2))
-        gained += 5;
-
-    if(values.length===5)
-        gained += 75;
-
-    dp += gained;
-
-    for(let color in energy){
-
-        if(energy[color] >= 10){
-
-            document
-            .getElementById(
-                color.toLowerCase()
-            )
-            .classList.add("active");
-
-        }
+    for(let i=0;i<password.length;i++){
+        display += revealed[i] ? password[i] : "*";
     }
 
-    checkBonus();
+    document.getElementById("password").textContent = display;
 
-    if(dp >= 100){
-
-        dp -= 100;
-        encryption--;
-
-        updateImage();
-    }
-
-    document.getElementById("dp")
-        .innerText = dp;
+    document.getElementById("collection").textContent =
+        collection.join(", ");
 }
 
-function checkBonus(){
+function revealLetter(){
 
-    let ready = true;
+    let hidden = [];
 
-    for(let c in energy){
-
-        if(energy[c] < 10)
-            ready = false;
+    for(let i=0;i<revealed.length;i++){
+        if(!revealed[i]) hidden.push(i);
     }
 
-    if(ready){
+    if(hidden.length===0) return;
 
-        dp += 150;
+    let chosen =
+        hidden[Math.floor(Math.random()*hidden.length)];
 
-        encryption =
-            Math.max(
-                0,
-                encryption-1
-            );
+    revealed[chosen]=true;
 
-        for(let c in energy){
+    checkVault();
+}
 
-            energy[c]=0;
+function checkVault(){
 
-            document
-            .getElementById(
-                c.toLowerCase()
-            )
-            .classList.remove(
-                "active"
-            );
-        }
+    if(revealed.every(v=>v)){
 
-        alert(
-          "NETWORK BREACH!\n+150 DP"
-        );
+        collection.push(password);
 
-        updateImage();
+        alert("Vault Opened! Collected: " + password);
+
+        password = generatePassword();
+
+        updateUI();
     }
 }
 
-function updateImage(){
+function getSymbols(){
 
-    document
-      .getElementById("enc")
-      .innerText =
-      encryption;
+    let symbols = [...baseSymbols];
 
-    const blur =
-      encryption * 2;
+    if(bonusState.wilds>0){
+        symbols.push("WILD");
+    }
 
-    document
-      .getElementById(
-        "hiddenImage"
-      )
-      .style.filter =
-      `blur(${blur}px)`;
+    if(bonusState.gold>0){
+        symbols.push("GOLD");
+    }
 
-    if(encryption <= 0){
+    return symbols;
+}
 
-        alert(
-          "IMAGE RECOVERED!"
-        );
+function spin(reels){
 
-        stage++;
+    let cost =
+        reels===3 ? 10 :
+        reels===4 ? 20 :
+        40;
 
-        if(stage > 5){
+    if(bonusState.freeSpins>0){
 
-            alert(
-              "SYSTEM FULLY BREACHED"
-            );
+        bonusState.freeSpins--;
 
+    }else{
+
+        if(tokens < cost){
+            alert("Not enough tokens");
             return;
         }
 
-        document
-          .getElementById(
-            "stage"
-          )
-          .innerText =
-          stage;
+        tokens -= cost;
+    }
 
-        encryption = 10;
+    spins++;
 
-        updateImage();
+    let symbols = getSymbols();
+
+    let result = [];
+
+    document.getElementById("reels").innerHTML="";
+
+    for(let i=0;i<reels;i++){
+
+        let symbol =
+            symbols[Math.floor(Math.random()*symbols.length)];
+
+        result.push(symbol);
+
+        let div = document.createElement("div");
+        div.className="reel";
+        div.textContent=symbol;
+
+        document.getElementById("reels").appendChild(div);
+    }
+
+    evaluate(result);
+
+    decrementBonuses();
+
+    if(spins % 10 === 0){
+        showBonusChoice();
+    }
+
+    updateUI();
+}
+
+function evaluate(result){
+
+    let counts = {};
+
+    result.forEach(r=>{
+        counts[r]=(counts[r]||0)+1;
+    });
+
+    let message = "";
+
+    for(let symbol in counts){
+
+        if(counts[symbol] >= 3){
+
+            switch(symbol){
+
+                case "TOKEN":
+
+                    let reward = 25;
+
+                    if(bonusState.doubleTokens>0)
+                        reward*=2;
+
+                    tokens += reward;
+
+                    message +=
+                    `Token Match +${reward}<br>`;
+                    break;
+
+                case "KEY":
+
+                    keyPoints += 25;
+
+                    message +=
+                    `Encryption +25<br>`;
+
+                    break;
+
+                case "DECRYPT":
+
+                    revealLetter();
+
+                    message +=
+                    `Letter Decrypted<br>`;
+                    break;
+
+                case "GOLD":
+
+                    tokens += 50;
+                    keyPoints += 25;
+
+                    message +=
+                    `Gold Match!<br>`;
+                    break;
+
+                case "WILD":
+
+                    revealLetter();
+                    tokens += 20;
+
+                    message +=
+                    `Wild Bonus!<br>`;
+                    break;
+            }
+        }
+    }
+
+    while(keyPoints >= 100){
+
+        keyPoints -= 100;
+
+        revealLetter();
+
+        message +=
+        `Encryption Key Triggered!<br>`;
+    }
+
+    document.getElementById("result").innerHTML = message;
+}
+
+function decrementBonuses(){
+
+    for(let key in bonusState){
+
+        if(bonusState[key] > 0){
+            bonusState[key]--;
+        }
     }
 }
+
+function showBonusChoice(){
+
+    const choices = [
+
+        {
+            name:"Double Tokens (5 spins)",
+            action:()=>{
+                bonusState.doubleTokens = 5;
+            }
+        },
+
+        {
+            name:"Wild Symbols (5 spins)",
+            action:()=>{
+                bonusState.wilds = 5;
+            }
+        },
+
+        {
+            name:"Gold Symbols (5 spins)",
+            action:()=>{
+                bonusState.gold = 5;
+            }
+        },
+
+        {
+            name:"Decrypt Letter",
+            action:()=>{
+                revealLetter();
+            }
+        },
+
+        {
+            name:"3 Free Spins",
+            action:()=>{
+                bonusState.freeSpins += 3;
+            }
+        },
+
+        {
+            name:"+50 Encryption",
+            action:()=>{
+                keyPoints += 50;
+            }
+        },
+
+        {
+            name:"+50 Tokens",
+            action:()=>{
+                tokens += 50;
+            }
+        }
+    ];
+
+    let a =
+        choices[Math.floor(Math.random()*choices.length)];
+
+    let b =
+        choices[Math.floor(Math.random()*choices.length)];
+
+    while(a===b){
+        b =
+        choices[Math.floor(Math.random()*choices.length)];
+    }
+
+    let container =
+        document.getElementById("bonusChoices");
+
+    container.innerHTML =
+        "<h3>Choose Bonus</h3>";
+
+    let btn1 =
+        document.createElement("button");
+
+    btn1.textContent = a.name;
+
+    btn1.onclick = ()=>{
+        a.action();
+        container.innerHTML="";
+        updateUI();
+    };
+
+    let btn2 =
+        document.createElement("button");
+
+    btn2.textContent = b.name;
+
+    btn2.onclick = ()=>{
+        b.action();
+        container.innerHTML="";
+        updateUI();
+    };
+
+    container.appendChild(btn1);
+    container.appendChild(btn2);
+}
+
+updateUI();
 
 </script>
 
