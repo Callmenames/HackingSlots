@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -5,444 +6,412 @@
 <title>Vault Hacker</title>
 
 <style>
+
 body{
-    background:#111;
-    color:#0f0;
+    background:#050505;
+    color:#00ff66;
     font-family:monospace;
     text-align:center;
+    padding:20px;
 }
 
 h1{
-    color:#00ff88;
+    margin-bottom:10px;
 }
 
-#reels{
+#password{
+    font-size:32px;
+    letter-spacing:4px;
+    margin-bottom:20px;
+}
+
+#tokens{
+    font-size:22px;
+    margin:15px;
+}
+
+#reelContainer{
     display:flex;
     justify-content:center;
+    align-items:center;
     gap:10px;
     margin:20px;
 }
 
 .reel{
-    width:100px;
-    height:100px;
-    border:2px solid #0f0;
+    width:90px;
+    height:90px;
+    border:2px solid #00ff66;
+    font-size:50px;
     display:flex;
-    align-items:center;
     justify-content:center;
-    font-size:24px;
-    background:#000;
+    align-items:center;
+    background:#111;
 }
 
-button{
-    margin:5px;
-    padding:10px;
-    font-size:16px;
+.disabled{
+    opacity:0.25;
 }
 
-.panel{
-    margin:15px;
+#spinBtn{
+    width:120px;
+    height:90px;
+    font-size:20px;
+    cursor:pointer;
 }
 
-#bonusChoices button{
-    display:block;
+.upgrades{
+    display:flex;
+    justify-content:center;
+    gap:110px;
+    margin-top:5px;
+}
+
+.upgradeBtn{
+    width:90px;
+    height:35px;
+}
+
+.barOuter{
+    width:400px;
+    height:25px;
+    border:2px solid #00ff66;
     margin:10px auto;
 }
+
+.barInner{
+    height:100%;
+    width:0%;
+    background:#00ff66;
+    transition:0.3s;
+}
+
+#message{
+    margin-top:20px;
+    min-height:30px;
+    font-size:20px;
+}
+
 </style>
 </head>
 <body>
 
 <h1>VAULT HACKER</h1>
 
-<div class="panel">
-    Tokens: <span id="tokens">100</span>
+<div>PASSWORD</div>
+<div id="password"></div>
+
+<div>Encryption Key</div>
+
+<div class="barOuter">
+    <div id="barInner" class="barInner"></div>
 </div>
 
-<div class="panel">
-    Password:
-    <div id="password"></div>
+<div id="encText">0 / 100</div>
+
+<div id="tokens">Tokens: 100</div>
+
+<div id="reelContainer">
+
+    <div id="reel0" class="reel">❔</div>
+    <div id="reel1" class="reel">❔</div>
+    <div id="reel2" class="reel">❔</div>
+
+    <div id="reel3" class="reel disabled">⬛</div>
+    <div id="reel4" class="reel disabled">⬛</div>
+
+    <button id="spinBtn">SPIN</button>
+
 </div>
 
-<div class="panel">
-    Encryption Key:
-    <span id="keyProgress">0</span>/100
+<div class="upgrades">
+
+    <button id="buy4" class="upgradeBtn">+10</button>
+    <button id="buy5" class="upgradeBtn" disabled>+20</button>
+
 </div>
 
-<div id="reels"></div>
-
-<div>
-    <button onclick="spin(3)">Spin 3 Reels (10)</button>
-    <button onclick="spin(4)">Spin 4 Reels (20)</button>
-    <button onclick="spin(5)">Spin 5 Reels (40)</button>
-</div>
-
-<div class="panel">
-    <h3>Result</h3>
-    <div id="result"></div>
-</div>
-
-<div class="panel">
-    <h3>Collection</h3>
-    <div id="collection"></div>
-</div>
-
-<div id="bonusChoices"></div>
+<div id="message"></div>
 
 <script>
 
-let tokens = 100;
-
-let spins = 0;
-
-let keyPoints = 0;
-
-let collection = [];
-
-let bonusState = {
-    doubleTokens:0,
-    wilds:0,
-    gold:0,
-    freeSpins:0
-};
-
-const baseSymbols = [
-    "KEY",
-    "TOKEN",
-    "DECRYPT",
-    "FIREWALL",
-    "EXPLOIT",
-    "DATA"
+const symbols = [
+    "💾",
+    "🖥️",
+    "🔓",
+    "📁",
+    "🌐",
+    "🔑"
 ];
 
-let password = generatePassword();
-let revealed = [];
+let tokens = 100;
 
-function generatePassword(){
-    const words = [
-        "ACCESS",
-        "OVERRIDE",
-        "BREACH",
-        "PROTOCOL",
-        "MAINFRAME",
-        "DATABASE"
-    ];
+let encryption = 0;
 
-    let word = words[Math.floor(Math.random()*words.length)];
+const password = "PASSWORD";
 
-    revealed = Array(word.length).fill(false);
+let revealed = Array(password.length).fill(false);
 
-    return word;
-}
+let activeReels = 3;
 
-function updateUI(){
+let spinning = false;
 
-    document.getElementById("tokens").textContent = tokens;
+function updatePassword(){
 
-    document.getElementById("keyProgress").textContent = keyPoints;
-
-    let display = "";
+    let output = "";
 
     for(let i=0;i<password.length;i++){
-        display += revealed[i] ? password[i] : "*";
+
+        output += revealed[i]
+            ? password[i]
+            : "*";
+
     }
 
-    document.getElementById("password").textContent = display;
+    document.getElementById("password").textContent = output;
 
-    document.getElementById("collection").textContent =
-        collection.join(", ");
 }
 
 function revealLetter(){
 
-    let hidden = [];
+    const hidden = [];
 
     for(let i=0;i<revealed.length;i++){
+
         if(!revealed[i]) hidden.push(i);
+
     }
 
-    if(hidden.length===0) return;
+    if(hidden.length === 0){
 
-    let chosen =
+        alert("Vault Hacked!");
+
+        revealed.fill(false);
+
+        updatePassword();
+
+        return;
+
+    }
+
+    const index =
         hidden[Math.floor(Math.random()*hidden.length)];
 
-    revealed[chosen]=true;
+    revealed[index] = true;
 
-    checkVault();
+    updatePassword();
+
 }
 
-function checkVault(){
+function updateEncryption(){
 
-    if(revealed.every(v=>v)){
+    document.getElementById("encText").textContent =
+        encryption + " / 100";
 
-        collection.push(password);
+    document.getElementById("barInner").style.width =
+        encryption + "%";
 
-        alert("Vault Opened! Collected: " + password);
-
-        password = generatePassword();
-
-        updateUI();
-    }
 }
 
-function getSymbols(){
+function updateTokens(){
 
-    let symbols = [...baseSymbols];
+    document.getElementById("tokens").textContent =
+        "Tokens: " + tokens;
 
-    if(bonusState.wilds>0){
-        symbols.push("WILD");
-    }
-
-    if(bonusState.gold>0){
-        symbols.push("GOLD");
-    }
-
-    return symbols;
 }
 
-function spin(reels){
+function randomSymbol(){
 
-    let cost =
-        reels===3 ? 10 :
-        reels===4 ? 20 :
-        40;
-
-    if(bonusState.freeSpins>0){
-
-        bonusState.freeSpins--;
-
-    }else{
-
-        if(tokens < cost){
-            alert("Not enough tokens");
-            return;
-        }
-
-        tokens -= cost;
-    }
-
-    spins++;
-
-    let symbols = getSymbols();
-
-    let result = [];
-
-    document.getElementById("reels").innerHTML="";
-
-    for(let i=0;i<reels;i++){
-
-        let symbol =
-            symbols[Math.floor(Math.random()*symbols.length)];
-
-        result.push(symbol);
-
-        let div = document.createElement("div");
-        div.className="reel";
-        div.textContent=symbol;
-
-        document.getElementById("reels").appendChild(div);
-    }
-
-    evaluate(result);
-
-    decrementBonuses();
-
-    if(spins % 10 === 0){
-        showBonusChoice();
-    }
-
-    updateUI();
-}
-
-function evaluate(result){
-
-    let counts = {};
-
-    result.forEach(r=>{
-        counts[r]=(counts[r]||0)+1;
-    });
-
-    let message = "";
-
-    for(let symbol in counts){
-
-        if(counts[symbol] >= 3){
-
-            switch(symbol){
-
-                case "TOKEN":
-
-                    let reward = 25;
-
-                    if(bonusState.doubleTokens>0)
-                        reward*=2;
-
-                    tokens += reward;
-
-                    message +=
-                    `Token Match +${reward}<br>`;
-                    break;
-
-                case "KEY":
-
-                    keyPoints += 25;
-
-                    message +=
-                    `Encryption +25<br>`;
-
-                    break;
-
-                case "DECRYPT":
-
-                    revealLetter();
-
-                    message +=
-                    `Letter Decrypted<br>`;
-                    break;
-
-                case "GOLD":
-
-                    tokens += 50;
-                    keyPoints += 25;
-
-                    message +=
-                    `Gold Match!<br>`;
-                    break;
-
-                case "WILD":
-
-                    revealLetter();
-                    tokens += 20;
-
-                    message +=
-                    `Wild Bonus!<br>`;
-                    break;
-            }
-        }
-    }
-
-    while(keyPoints >= 100){
-
-        keyPoints -= 100;
-
-        revealLetter();
-
-        message +=
-        `Encryption Key Triggered!<br>`;
-    }
-
-    document.getElementById("result").innerHTML = message;
-}
-
-function decrementBonuses(){
-
-    for(let key in bonusState){
-
-        if(bonusState[key] > 0){
-            bonusState[key]--;
-        }
-    }
-}
-
-function showBonusChoice(){
-
-    const choices = [
-
-        {
-            name:"Double Tokens (5 spins)",
-            action:()=>{
-                bonusState.doubleTokens = 5;
-            }
-        },
-
-        {
-            name:"Wild Symbols (5 spins)",
-            action:()=>{
-                bonusState.wilds = 5;
-            }
-        },
-
-        {
-            name:"Gold Symbols (5 spins)",
-            action:()=>{
-                bonusState.gold = 5;
-            }
-        },
-
-        {
-            name:"Decrypt Letter",
-            action:()=>{
-                revealLetter();
-            }
-        },
-
-        {
-            name:"3 Free Spins",
-            action:()=>{
-                bonusState.freeSpins += 3;
-            }
-        },
-
-        {
-            name:"+50 Encryption",
-            action:()=>{
-                keyPoints += 50;
-            }
-        },
-
-        {
-            name:"+50 Tokens",
-            action:()=>{
-                tokens += 50;
-            }
-        }
+    return symbols[
+        Math.floor(Math.random()*symbols.length)
     ];
 
-    let a =
-        choices[Math.floor(Math.random()*choices.length)];
-
-    let b =
-        choices[Math.floor(Math.random()*choices.length)];
-
-    while(a===b){
-        b =
-        choices[Math.floor(Math.random()*choices.length)];
-    }
-
-    let container =
-        document.getElementById("bonusChoices");
-
-    container.innerHTML =
-        "<h3>Choose Bonus</h3>";
-
-    let btn1 =
-        document.createElement("button");
-
-    btn1.textContent = a.name;
-
-    btn1.onclick = ()=>{
-        a.action();
-        container.innerHTML="";
-        updateUI();
-    };
-
-    let btn2 =
-        document.createElement("button");
-
-    btn2.textContent = b.name;
-
-    btn2.onclick = ()=>{
-        b.action();
-        container.innerHTML="";
-        updateUI();
-    };
-
-    container.appendChild(btn1);
-    container.appendChild(btn2);
 }
 
-updateUI();
+document.getElementById("buy4").onclick = ()=>{
+
+    if(spinning) return;
+
+    if(activeReels >= 4) return;
+
+    if(tokens < 10) return;
+
+    tokens -= 10;
+
+    activeReels = 4;
+
+    document.getElementById("reel3")
+        .classList.remove("disabled");
+
+    document.getElementById("buy5").disabled = false;
+
+    updateTokens();
+
+};
+
+document.getElementById("buy5").onclick = ()=>{
+
+    if(spinning) return;
+
+    if(activeReels >= 5) return;
+
+    if(tokens < 20) return;
+
+    tokens -= 20;
+
+    activeReels = 5;
+
+    document.getElementById("reel4")
+        .classList.remove("disabled");
+
+    updateTokens();
+
+};
+
+document.getElementById("spinBtn").onclick = spin;
+
+async function spin(){
+
+    if(spinning) return;
+
+    if(tokens < 10){
+
+        alert("Not enough tokens");
+
+        return;
+    }
+
+    spinning = true;
+
+    tokens -= 10;
+
+    updateTokens();
+
+    document.getElementById("message").textContent =
+        "";
+
+    let finalResults = [];
+
+    const intervals = [];
+
+    for(let i=0;i<activeReels;i++){
+
+        intervals[i] = setInterval(()=>{
+
+            document.getElementById("reel"+i)
+                .textContent = randomSymbol();
+
+        },75);
+
+    }
+
+    for(let i=0;i<activeReels;i++){
+
+        await new Promise(resolve =>
+            setTimeout(resolve,300));
+
+        clearInterval(intervals[i]);
+
+        const result = randomSymbol();
+
+        finalResults.push(result);
+
+        document.getElementById("reel"+i)
+            .textContent = result;
+
+    }
+
+    evaluate(finalResults);
+
+    activeReels = 3;
+
+    document.getElementById("reel3")
+        .classList.add("disabled");
+
+    document.getElementById("reel4")
+        .classList.add("disabled");
+
+    document.getElementById("reel3").textContent = "⬛";
+    document.getElementById("reel4").textContent = "⬛";
+
+    document.getElementById("buy5").disabled = true;
+
+    spinning = false;
+
+}
+
+function evaluate(results){
+
+    const counts = {};
+
+    results.forEach(symbol=>{
+
+        counts[symbol] =
+            (counts[symbol] || 0) + 1;
+
+    });
+
+    let message = "No Match";
+
+    Object.keys(counts).forEach(symbol=>{
+
+        const count = counts[symbol];
+
+        if(count >= 3){
+
+            let reward = 0;
+
+            if(count === 3) reward = 20;
+            if(count === 4) reward = 50;
+            if(count === 5) reward = 120;
+
+            tokens += reward;
+
+            message =
+                `${count}x ${symbol} → +${reward} Tokens`;
+
+            if(symbol === "🔑"){
+
+                let gain = 0;
+
+                if(count === 3) gain = 25;
+                if(count === 4) gain = 50;
+                if(count === 5) gain = 100;
+
+                encryption += gain;
+
+                if(encryption >= 100){
+
+                    encryption -= 100;
+
+                    revealLetter();
+
+                    message +=
+                    ` | Letter Decrypted`;
+
+                }
+
+                updateEncryption();
+
+            }
+
+        }
+
+    });
+
+    updateTokens();
+
+    document.getElementById("message")
+        .textContent = message;
+
+}
+
+updatePassword();
+updateEncryption();
+updateTokens();
 
 </script>
 
 </body>
 </html>
+```
