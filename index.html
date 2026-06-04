@@ -364,27 +364,27 @@ function evaluate(results){
 
     }else if(values[0] === 4){
 
-        reward = 150;
+        reward = 200;
         handName = "Four of a Kind";
 
     }else if(values[0] === 3 && values[1] === 2){
 
-        reward = 100;
+        reward = 150;
         handName = "Full House";
 
     }else if(values[0] === 3){
 
-        reward = 50;
+        reward = 100;
         handName = "Three of a Kind";
 
     }else if(values.filter(v => v === 2).length >= 2){
 
-        reward = 30;
+        reward = 50;
         handName = "Two Pair";
 
     }else if(values[0] === 2){
 
-        reward = 15;
+        reward = 20;
         handName = "Pair";
 
     }
